@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tính lương</title>
+<style>
+  :root{
+    --paper:#eef1e8;
+    --paper-deep:#e3e9dc;
+    --paper-line:#b7c9ae;
+    --ink:#1c2b22;
+    --ink-soft:#3d4d3f;
+    --dark-bg:#0e1712;
+    --panel-bg:#152019;
+    --panel-border:#25352a;
+    --accent-stamp:#a5332a;
+    --accent-gold:#c99a3c;
+    --muted:#7b8b7d;
+    --danger:#b5443a;
+    --good:#3f7a4f;
+    --input-bg:#0b120d;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--dark-bg);
+    color:#e7ede7;
+    font-family:'Times New Roman', Times, serif;
+    min-height:100vh;
+  }
+  .wrap{
+    max-width:1680px;
+    margin:0 auto;
+    padding:18px 24px 24px;
+  }
+  header.top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    border-bottom:2px solid var(--panel-border);
+    padding-bottom:8px;
+    margin-bottom:12px;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  header.top .eyebrow{
+    font-family:'Times New Roman', Times, serif;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    font-size:10px;
+    color:var(--accent-gold);
+    font-weight:700;
+    margin-bottom:3px;
+  }
+  header.top h1{
+    margin:0;
+    font-size:20px;
+    font-weight:700;
+    letter-spacing:-.01em;
+  }
+  header.top .sub{
+    color:var(--muted);
+    font-size:12px;
+    max-width:520px;
+  }
+  header.top .logo{
+    font-family:'Times New Roman', Times, serif;
+    font-size:36px;
+    font-weight:700;
+    letter-spacing:.05em;
+    color:var(--accent-gold);
+    line-height:1;
+    text-shadow: 0 2px 0 rgba(0,0,0,.4);
+  }
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr) 380px;
+    grid-auto-rows:min-content;
+    gap:14px;
+    align-items:start;
+  }
+  .grid .receipt-holder{
+    grid-column:4;
+    grid-row:1 / 3;
+  }
+  @media (max-width:1400px){
+    .grid{grid-template-columns: repeat(2, 1fr) 360px;}
+    .grid .receipt-holder{grid-row:1 / 4;}
+  }
+  @media (max-width:1000px){
+    .grid{grid-template-columns: 1fr;}
+    .grid .receipt-holder{grid-column:1; grid-row:auto;}
+  }
+
+  /* ---- form side ---- */
+  .card{
+    background:var(--panel-bg);
+    border:1px solid var(--panel-border);
+    border-radius:10px;
+    padding:12px 14px;
+    margin-bottom:0;
+    height:100%;
+  }
+  .card h2{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.12em;
+    color:var(--accent-gold);
+    margin:0 0 8px;
+    font-weight:600;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .card h2 .n{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:18px;height:18px;
+    border-radius:50%;
+    background:var(--accent-gold);
+    color:var(--dark-bg);
+    font-size:10px;
+    font-weight:700;
+  }
+  .row{
+    display:grid;
+    grid-template-columns: 1fr 130px;
+    gap:10px;
+    align-items:center;
+    margin-bottom:7px;
+  }
+  .row.wide{grid-template-columns:1fr;}
+  .row label{
+    font-size:12.5px;
+    color:#d3ddd2;
+  }
+  .row .hint{
+    display:block;
+    font-size:10px;
+    color:var(--muted);
+    margin-top:2px;
+  }
+  input[type=number], input[type=text]{
+    width:100%;
+    background:var(--input-bg);
+    border:1px solid #2c3b30;
+    color:#f2f6ee;
+    padding:6px 8px;
+    border-radius:6px;
+    font-family:'Times New Roman', Times, serif;
+    font-size:13.5px;
+    text-align:right;
+  }
+  input:focus{outline:2px solid var(--accent-gold); outline-offset:1px;}
+  input.locked{
+    background:rgba(201,154,60,.14);
+    border-color:var(--accent-gold);
+    color:var(--accent-gold);
+    cursor:not-allowed;
+    font-weight:700;
+  }
+  input.locked:focus{outline:none;}
+  input.locked:disabled{ -webkit-text-fill-color:var(--accent-gold); opacity:1; }
+  .lock-hint{color:var(--accent-gold) !important; opacity:.85;}
+  .preview{
+    font-family:'Times New Roman', Times, serif;
+    font-size:11px;
+    color:var(--accent-gold);
+    text-align:right;
+    margin-top:3px;
+  }
+  .toggle-row{
+    display:grid;
+    grid-template-columns: 22px 1fr 130px;
+    gap:8px;
+    align-items:center;
+    margin-bottom:7px;
+  }
+  .toggle-row input[type=checkbox]{
+    width:16px;height:16px;
+    accent-color:var(--accent-gold);
+  }
+  .toggle-row label{font-size:12.5px;color:#d3ddd2;}
+  .two-col{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+
+  /* ---- receipt side ---- */
+  .receipt-holder{
+    position:sticky;
+    top:12px;
+  }
+  .receipt{
+    background:
+      repeating-linear-gradient(180deg, transparent 0, transparent 24px, var(--paper-line) 24px, var(--paper-line) 25px),
+      var(--paper);
+    color:var(--ink);
+    font-family:'Times New Roman', Times, serif;
+    padding:18px 20px 14px;
+    position:relative;
+    box-shadow: 0 20px 45px rgba(0,0,0,.45);
+    clip-path: polygon(
+      0 6px, 3% 0, 6% 6px, 9% 0, 12% 6px, 15% 0, 18% 6px, 21% 0, 24% 6px, 27% 0, 30% 6px, 33% 0, 36% 6px, 39% 0, 42% 6px, 45% 0, 48% 6px, 51% 0, 54% 6px, 57% 0, 60% 6px, 63% 0, 66% 6px, 69% 0, 72% 6px, 75% 0, 78% 6px, 81% 0, 84% 6px, 87% 0, 90% 6px, 93% 0, 96% 6px, 99% 0, 100% 6px,
+      100% calc(100% - 6px), 97% 100%, 94% calc(100% - 6px), 91% 100%, 88% calc(100% - 6px), 85% 100%, 82% calc(100% - 6px), 79% 100%, 76% calc(100% - 6px), 73% 100%, 70% calc(100% - 6px), 67% 100%, 64% calc(100% - 6px), 61% 100%, 58% calc(100% - 6px), 55% 100%, 52% calc(100% - 6px), 49% 100%, 46% calc(100% - 6px), 43% 100%, 40% calc(100% - 6px), 37% 100%, 34% calc(100% - 6px), 31% 100%, 28% calc(100% - 6px), 25% 100%, 22% calc(100% - 6px), 19% 100%, 16% calc(100% - 6px), 13% 100%, 10% calc(100% - 6px), 7% 100%, 4% calc(100% - 6px), 1% 100%, 0 calc(100% - 6px)
+    );
+  }
+  .r-head{
+    text-align:center;
+    border-bottom:1px dashed var(--ink-soft);
+    padding-bottom:10px;
+    margin-bottom:10px;
+  }
+  .r-head .co{
+    font-family:'Times New Roman', Times, serif;
+    font-weight:700;
+    letter-spacing:.16em;
+    font-size:13px;
+  }
+  .r-head .doc{
+    font-size:10.5px;
+    color:var(--ink-soft);
+    margin-top:2px;
+    letter-spacing:.08em;
+  }
+  .r-line{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    font-size:11.5px;
+    padding:1.5px 0;
+  }
+  .r-line .lbl{color:var(--ink-soft);}
+  .r-line .val{font-weight:700; white-space:nowrap;}
+  .r-line.neg .val{color:var(--danger);}
+  .r-line.total{
+    border-top:1px solid var(--ink);
+    margin-top:6px;
+    padding-top:6px;
+    font-size:13.5px;
+  }
+  .r-sec-title{
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:.12em;
+    color:var(--ink-soft);
+    margin:8px 0 3px;
+  }
+  .perforation{
+    border-top:1px dashed var(--ink-soft);
+    margin:14px -24px;
+    position:relative;
+    height:0;
+  }
+  .perforation:before, .perforation:after{
+    content:'';
+    position:absolute;
+    top:-6px;
+    width:12px;height:12px;
+    border-radius:50%;
+    background:var(--dark-bg);
+  }
+  .perforation:before{left:-6px;}
+  .perforation:after{right:-6px;}
+  .grand{
+    text-align:center;
+    margin-top:14px;
+    padding-top:10px;
+  }
+  .grand .g-lbl{
+    font-size:11px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+  }
+  .grand .g-val{
+    font-size:26px;
+    font-weight:700;
+    letter-spacing:-.01em;
+    margin-top:4px;
+  }
+  .grand .g-vnd{font-size:14px; font-weight:400;}
+
+  .stamp{
+    position:absolute;
+    right:22px;
+    top:78px;
+    border:3px solid var(--accent-stamp);
+    color:var(--accent-stamp);
+    border-radius:8px;
+    padding:6px 10px;
+    font-family:'Times New Roman', Times, serif;
+    font-weight:700;
+    font-size:13px;
+    letter-spacing:.06em;
+    transform:rotate(-9deg);
+    opacity:.9;
+    text-align:center;
+    line-height:1.15;
+    background:rgba(165,51,42,.06);
+  }
+  .stamp.good{border-color:var(--good); color:var(--good); background:rgba(63,122,79,.07);}
+
+  .compare-box{
+    margin-top:16px;
+    padding-top:10px;
+    border-top:1px dashed var(--ink-soft);
+  }
+  .compare-result{
+    margin-top:8px;
+    font-size:12px;
+    text-align:center;
+    font-weight:700;
+  }
+  .compare-result.match{color:var(--good);}
+  .compare-result.mismatch{color:var(--danger);}
+
+  .note{
+    font-size:10px;
+    color:var(--muted);
+    line-height:1.4;
+    margin-top:10px;
+  }
+  .note b{color:#c7d1c4;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Công cụ nội bộ · tự tính lương</div>
+      <h1>TÍNH LƯƠNG THÁNG</h1>
+      <div class="sub">Nhập số liệu, tự kiểm tra lương và thuế TNCN. Đơn vị nghìn đồng — ví dụ 1000 = 1.000.000đ.</div>
+    </div>
+    <div class="logo">QCM</div>
+  </header>
+
+  <div class="grid">
+      <div class="card">
+        <h2><span class="n">1</span>Lương cơ bản &amp; ngày công</h2>
+        <div class="row">
+          <label>Lương cơ bản<span class="hint">nhập theo nghìn đồng</span></label>
+          <div><input type="number" id="baseSalary" value="0"><div class="preview" id="baseSalaryPreview"></div></div>
+        </div>
+        <div class="row">
+          <label>Tổng ngày công chuẩn của tháng</label>
+          <input type="number" id="totalDays" value="26">
+        </div>
+        <div class="row">
+          <label>Số ngày nghỉ không lương / nghỉ ốm</label>
+          <input type="number" id="leaveDays" value="0">
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="n">2</span>Phụ cấp</h2>
+        <div class="toggle-row">
+          <input type="checkbox" id="tnCheck">
+          <label for="tnCheck">Phụ cấp trách nhiệm</label>
+          <input type="number" id="tnAmount" value="1000" class="locked" disabled>
+        </div>
+        <div class="toggle-row">
+          <input type="checkbox" id="dhCheck">
+          <label for="dhCheck">Phụ cấp độc hại</label>
+          <input type="number" id="dhAmount" value="300" class="locked" disabled>
+        </div>
+        <div class="row">
+          <label>Phụ cấp chuyên cần <span class="hint">= 0 nếu có ngày nghỉ ở mục 1</span></label>
+          <input type="number" id="ccAmount" value="450">
+        </div>
+        <div class="row">
+          <label>Phụ cấp xăng xe <span class="hint lock-hint">🔒 cố định · tự chia theo ngày công nếu nghỉ</span></label>
+          <input type="number" id="xxAmount" value="350" class="locked" disabled>
+        </div>
+        <div class="row">
+          <label>Phụ cấp nhà ở <span class="hint lock-hint">🔒 cố định · tự chia theo ngày công nếu nghỉ</span></label>
+          <input type="number" id="noAmount" value="300" class="locked" disabled>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="n">3</span>Khấu trừ bảo hiểm</h2>
+        <div class="two-col">
+          <div>
+            <label style="font-size:12px;color:var(--muted)">BHXH (%)</label>
+            <input type="number" id="bhxhRate" value="8" step="0.1" class="locked" disabled>
+          </div>
+          <div>
+            <label style="font-size:12px;color:var(--muted)">BHYT (%)</label>
+            <input type="number" id="bhytRate" value="1.5" step="0.1" class="locked" disabled>
+          </div>
+        </div>
+        <div class="two-col" style="margin-top:10px;">
+          <div>
+            <label style="font-size:12px;color:var(--muted)">BHTN (%)</label>
+            <input type="number" id="bhtnRate" value="1" step="0.1" class="locked" disabled>
+          </div>
+          <div>
+            <label style="font-size:12px;color:var(--muted)">Công đoàn (nghìn)</label>
+            <input type="number" id="unionFee" value="30" class="locked" disabled>
+          </div>
+        </div>
+        <div class="note">🔒 Các ô trên đã khóa vì công ty quy định cố định. Tính BHXH/BHYT/BHTN trên (lương cơ bản + phụ cấp trách nhiệm/độc hại nếu có), các phụ cấp còn lại không tính bảo hiểm.</div>
+      </div>
+
+      <div class="card">
+        <h2><span class="n">4</span>Tăng ca &amp; Thưởng</h2>
+        <div class="row">
+          <label>Giờ OT ngày thường <span class="hint">x1.5 lương giờ</span></label>
+          <input type="number" id="otHours15" value="0" step="0.5">
+        </div>
+        <div class="row">
+          <label>Giờ OT cuối tuần / lễ <span class="hint">x2 lương giờ</span></label>
+          <input type="number" id="otHours20" value="0" step="0.5">
+        </div>
+        <div class="row">
+          <label>Hệ số thưởng <span class="hint">vd 1.25 = 125% lương cơ bản</span></label>
+          <input type="number" id="bonusFactor" value="0" step="0.1">
+        </div>
+        <div class="row">
+          <label>Khoản được chi trả khác <span class="hint">nghìn đồng, mặc định 0</span></label>
+          <input type="number" id="otherPay" value="0">
+        </div>
+        <div class="row">
+          <label>Khoản khấu trừ khác <span class="hint">nghìn đồng, mặc định 0</span></label>
+          <input type="number" id="otherDeduct" value="0">
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="n">5</span>Giảm trừ gia cảnh (tính thuế TNCN)</h2>
+        <div class="row">
+          <label>Số người phụ thuộc</label>
+          <input type="number" id="dependents" value="0">
+        </div>
+        <div class="note">Áp dụng mức giảm trừ hiệu lực từ kỳ tính thuế 2026: <b>15.500.000đ/tháng</b> cho bản thân + <b>6.200.000đ/tháng</b> mỗi người phụ thuộc (Nghị quyết 110/2025/UBTVQH15), biểu thuế lũy tiến 5 bậc theo Luật Thuế TNCN 2025. Tiền tăng ca không tính vào thu nhập chịu thuế.</div>
+      </div>
+
+      <div class="card">
+        <h2><span class="n">6</span>Hoàn thuế TNCN</h2>
+        <div class="row">
+          <label>Tiền hoàn thuế nhận trong tháng này <span class="hint">nhập theo nghìn đồng, để 0 nếu không có</span></label>
+          <div><input type="number" id="taxRefund" value="0"><div class="preview" id="taxRefundPreview"></div></div>
+        </div>
+        <div class="note">Khoản hoàn thuế TNCN từ quyết toán năm trước (nếu có) được cộng thẳng vào thực lãnh tháng nhận, không tính thuế lại.</div>
+      </div>
+
+    <!-- RECEIPT -->
+    <div class="receipt-holder">
+      <div class="receipt" id="receipt">
+        <div class="r-head">
+          <div class="co">PHIẾU TỰ TÍNH LƯƠNG</div>
+          <div class="doc" id="dateLine"></div>
+        </div>
+
+        <div class="r-sec-title">Lương theo ngày công</div>
+        <div class="r-line"><span class="lbl">Ngày công thực tế</span><span class="val" id="outDays">—</span></div>
+        <div class="r-line"><span class="lbl">Lương theo ngày công</span><span class="val" id="outSalaryByDay">—</span></div>
+
+        <div class="r-sec-title">Phụ cấp</div>
+        <div class="r-line"><span class="lbl">Trách nhiệm</span><span class="val" id="outTN">—</span></div>
+        <div class="r-line"><span class="lbl">Độc hại</span><span class="val" id="outDH">—</span></div>
+        <div class="r-line"><span class="lbl">Chuyên cần</span><span class="val" id="outCC">—</span></div>
+        <div class="r-line"><span class="lbl">Xăng xe</span><span class="val" id="outXX">—</span></div>
+        <div class="r-line"><span class="lbl">Nhà ở</span><span class="val" id="outNO">—</span></div>
+        <div class="r-line total"><span class="lbl">Tổng phụ cấp</span><span class="val" id="outTongPC">—</span></div>
+
+        <div class="r-sec-title">Khấu trừ</div>
+        <div class="r-line neg"><span class="lbl">BHXH</span><span class="val" id="outBHXH">—</span></div>
+        <div class="r-line neg"><span class="lbl">BHYT</span><span class="val" id="outBHYT">—</span></div>
+        <div class="r-line neg"><span class="lbl">BHTN</span><span class="val" id="outBHTN">—</span></div>
+        <div class="r-line neg"><span class="lbl">Công đoàn</span><span class="val" id="outUnion">—</span></div>
+        <div class="r-line total neg"><span class="lbl">Tổng khấu trừ</span><span class="val" id="outTongKT">—</span></div>
+
+        <div class="r-sec-title">Tăng ca &amp; thưởng</div>
+        <div class="r-line"><span class="lbl">Tăng ca x1.5</span><span class="val" id="outOT15">—</span></div>
+        <div class="r-line"><span class="lbl">Tăng ca x2</span><span class="val" id="outOT20">—</span></div>
+        <div class="r-line"><span class="lbl">Thưởng</span><span class="val" id="outBonus">—</span></div>
+        <div class="r-line"><span class="lbl">Khoản khác</span><span class="val" id="outOtherPay">—</span></div>
+        <div class="r-line neg"><span class="lbl">Khấu trừ khác</span><span class="val" id="outOtherDeduct">—</span></div>
+
+        <div class="perforation"></div>
+
+        <div class="r-sec-title">Thuế thu nhập cá nhân (tham khảo)</div>
+        <div class="r-line"><span class="lbl">Thu nhập chịu thuế</span><span class="val" id="outThuNhapChiuThue">—</span></div>
+        <div class="r-line"><span class="lbl">Giảm trừ gia cảnh</span><span class="val" id="outGiamTru">—</span></div>
+        <div class="r-line"><span class="lbl">Thu nhập tính thuế</span><span class="val" id="outThuNhapTinhThue">—</span></div>
+        <div class="r-line neg total"><span class="lbl">Thuế TNCN tạm tính</span><span class="val" id="outThue">—</span></div>
+        <div class="r-line"><span class="lbl">Hoàn thuế TNCN</span><span class="val" id="outHoanThue">—</span></div>
+
+        <div class="grand">
+          <div class="g-lbl">Thực lãnh sau thuế</div>
+          <div class="g-val" id="outFinal">—<span class="g-vnd"> đ</span></div>
+        </div>
+      </div>
+      <div class="note">Ước tính tham khảo để tự kiểm tra, không thay thế bảng lương chính thức của HR. Một số phụ cấp / phần tăng ca có thể được miễn thuế theo quy định riêng — nếu số lệch nhiều, hỏi lại HR hoặc kế toán.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+function num(id){ const v = parseFloat(document.getElementById(id).value); return isNaN(v) ? 0 : v; }
+function bool(id){ return document.getElementById(id).checked; }
+function fmt(n){ return Math.round(n).toLocaleString('vi-VN'); }
+function fmtSigned(n){ const s = Math.round(n); return (s>=0?'':'-') + Math.abs(s).toLocaleString('vi-VN'); }
+
+function pit(thuNhapTinhThue){ // thuNhapTinhThue in nghìn đồng / tháng
+  const brackets = [
+    {limit: 10000, rate: 0.05},
+    {limit: 30000, rate: 0.10},
+    {limit: 60000, rate: 0.20},
+    {limit: 100000, rate: 0.30},
+    {limit: Infinity, rate: 0.35},
+  ];
+  let thue = 0, prev = 0;
+  for (const b of brackets){
+    if (thuNhapTinhThue > prev){
+      const phan = Math.min(thuNhapTinhThue, b.limit) - prev;
+      thue += phan * b.rate;
+      prev = b.limit;
+    } else break;
+  }
+  return thue;
+}
+
+function recalc(){
+  const baseSalary = num('baseSalary'); // nghìn
+  const totalDays = num('totalDays');
+  const leaveDays = num('leaveDays');
+  const actualDays = totalDays - leaveDays;
+
+  document.getElementById('baseSalaryPreview').textContent = baseSalary ? ('= ' + fmt(baseSalary*1000) + ' đ') : '';
+
+  const tnOn = bool('tnCheck'), dhOn = bool('dhCheck');
+  const tnAmount = tnOn ? num('tnAmount') : 0;
+  const dhAmount = dhOn ? num('dhAmount') : 0;
+  const ccRate = num('ccAmount');
+  const xxRate = num('xxAmount');
+  const noRate = num('noAmount');
+
+  const salaryByDay = totalDays ? (baseSalary/totalDays*actualDays) : 0;
+  const cc = leaveDays>0 ? 0 : ccRate;
+  const xx = (leaveDays>0 && totalDays) ? (xxRate/totalDays*actualDays) : xxRate;
+  const no = (leaveDays>0 && totalDays) ? (noRate/totalDays*actualDays) : noRate;
+  const tongPhuCap = tnAmount + dhAmount + cc + xx + no;
+
+  const baseChoBH = baseSalary + tnAmount + dhAmount;
+  const bhxh = baseChoBH * num('bhxhRate')/100;
+  const bhyt = baseChoBH * num('bhytRate')/100;
+  const bhtn = baseChoBH * num('bhtnRate')/100;
+  const unionFee = num('unionFee');
+  const tongKhauTru = bhxh + bhyt + bhtn + unionFee;
+
+  const hourlyRate = totalDays ? (baseChoBH/totalDays/8) : 0;
+  const otHours15 = num('otHours15');
+  const otHours20 = num('otHours20');
+  const otPay15 = otHours15 * hourlyRate * 1.5;
+  const otPay20 = otHours20 * hourlyRate * 2;
+  const otPay = otPay15 + otPay20;
+
+  const bonusFactor = num('bonusFactor');
+  const bonus = baseSalary * bonusFactor;
+
+  const otherPay = num('otherPay');
+  const otherDeduct = num('otherDeduct');
+
+  const thuNhapTruocThue = salaryByDay + tongPhuCap - tongKhauTru + otPay + bonus + otherPay - otherDeduct; // nghìn, dùng để tính thực lãnh
+  const thuNhapChiuThue = salaryByDay + tongPhuCap - tongKhauTru + bonus + otherPay; // nghìn, KHÔNG gồm OT và khấu trừ khác — tiền tăng ca không tính thuế TNCN, khấu trừ khác (tạm ứng...) không giảm thu nhập chịu thuế
+
+  const dependents = num('dependents');
+  const giamTruBanThan = 15500; // nghìn / tháng, hiệu lực từ 2026
+  const giamTruNguoiPT = 6200;
+  const giamTruGiaCanh = giamTruBanThan + dependents*giamTruNguoiPT;
+
+  const thuNhapTinhThue = Math.max(0, thuNhapChiuThue - giamTruGiaCanh);
+  const thue = pit(thuNhapTinhThue);
+
+  const taxRefund = num('taxRefund');
+  document.getElementById('taxRefundPreview').textContent = taxRefund ? ('= ' + fmt(taxRefund*1000) + ' đ') : '';
+
+  const thucLanh = (thuNhapTruocThue - thue + taxRefund) * 1000; // đ
+
+  // render
+  document.getElementById('outDays').textContent = actualDays + ' ngày';
+  document.getElementById('outSalaryByDay').textContent = fmt(salaryByDay*1000) + ' đ';
+  document.getElementById('outTN').textContent = fmt(tnAmount*1000) + ' đ';
+  document.getElementById('outDH').textContent = fmt(dhAmount*1000) + ' đ';
+  document.getElementById('outCC').textContent = fmt(cc*1000) + ' đ';
+  document.getElementById('outXX').textContent = fmt(xx*1000) + ' đ';
+  document.getElementById('outNO').textContent = fmt(no*1000) + ' đ';
+  document.getElementById('outTongPC').textContent = fmt(tongPhuCap*1000) + ' đ';
+
+  document.getElementById('outBHXH').textContent = '-' + fmt(bhxh*1000) + ' đ';
+  document.getElementById('outBHYT').textContent = '-' + fmt(bhyt*1000) + ' đ';
+  document.getElementById('outBHTN').textContent = '-' + fmt(bhtn*1000) + ' đ';
+  document.getElementById('outUnion').textContent = '-' + fmt(unionFee*1000) + ' đ';
+  document.getElementById('outTongKT').textContent = '-' + fmt(tongKhauTru*1000) + ' đ';
+
+  document.getElementById('outOT15').textContent = fmt(otPay15*1000) + ' đ';
+  document.getElementById('outOT20').textContent = fmt(otPay20*1000) + ' đ';
+  document.getElementById('outBonus').textContent = fmt(bonus*1000) + ' đ';
+  document.getElementById('outOtherPay').textContent = fmt(otherPay*1000) + ' đ';
+  document.getElementById('outOtherDeduct').textContent = '-' + fmt(otherDeduct*1000) + ' đ';
+
+  document.getElementById('outThuNhapChiuThue').textContent = fmt(thuNhapChiuThue*1000) + ' đ';
+  document.getElementById('outGiamTru').textContent = fmt(giamTruGiaCanh*1000) + ' đ';
+  document.getElementById('outThuNhapTinhThue').textContent = fmt(thuNhapTinhThue*1000) + ' đ';
+  document.getElementById('outThue').textContent = '-' + fmt(thue*1000) + ' đ';
+  document.getElementById('outHoanThue').textContent = '+' + fmt(taxRefund*1000) + ' đ';
+
+  document.getElementById('outFinal').innerHTML = fmt(thucLanh) + '<span class="g-vnd"> đ</span>';
+}
+
+document.getElementById('dateLine').textContent = 'Kỳ lương ' + new Date().toLocaleDateString('vi-VN', {month:'2-digit', year:'numeric'});
+
+document.querySelectorAll('input').forEach(el => el.addEventListener('input', recalc));
+recalc();
+</script>
+</body>
+</html>
